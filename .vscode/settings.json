@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "vm.physky.org",
+            "port": 8862,
+            "driver": "PostgreSQL",
+            "name": "cluster-monitoring",
+            "database": "cluster_monitoring",
+            "username": "cluster_monitoring_analysis",
+            "password": "cluster_monitoring_password"
+        }
+    ]
+}
