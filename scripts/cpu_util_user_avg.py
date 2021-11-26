@@ -58,7 +58,7 @@ select "user",
 from user_cpu_mem
 where time > %(begin)s and time < %(end)s
 group by "user"
-having count(*) / 60.0 / 24.0 / 8.0 >= 0.01
+having count(*) / 60.0 / 24.0 / 8.0 >= 0.0002
 order by cpu_time_avg desc,
     using_time_avg desc
 """, {'begin': args.begin_time * 1000, 'end': args.end_time * 1000})

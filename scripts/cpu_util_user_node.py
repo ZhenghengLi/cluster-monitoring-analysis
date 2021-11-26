@@ -84,7 +84,7 @@ FROM (
         group by "user",
             node
     ) as per_node on average.user = per_node.user
-where per_node.using_time >= 0.01
+where per_node.using_time >= 0.001
 order by cpu_time_avg desc,
     using_time_avg desc,
     "user",
