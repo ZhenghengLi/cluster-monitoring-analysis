@@ -1,9 +1,10 @@
 select idle.node as node,
-    total.cnt / 60 / 24 as total_time,
-    idle.cnt / 60 / 24 as fully_idle,
-    (total.cnt - idle.cnt) / 60 / 24 as usage_time,
-    usage.val / 60 / 24 as cpu_time,
-    busy.cnt / 60 / 24 as fully_busy,
+    (total.max_time - total.min_time) / 60000.0 / 60./ 24 as total_time,
+    total.cnt / 60.0 / 24 as record_time,
+    idle.cnt / 60.0 / 24 as fully_idle,
+    (total.cnt - idle.cnt) / 60.0 / 24 as usage_time,
+    usage.val / 60.0 / 24 as cpu_time,
+    busy.cnt / 60.0 / 24 as fully_busy,
     busy.cnt / usage.val as busy_ratio
 from (
         select node,
@@ -28,7 +29,9 @@ from (
     ) as usage on idle.node = usage.node
     INNER JOIN (
         select node,
-            count(*) as cnt
+            count(*) as cnt,
+            min(time) as min_time,
+            max(time) as max_time
         from node_cpu_load
         group by node
     ) as total on idle.node = total.node
