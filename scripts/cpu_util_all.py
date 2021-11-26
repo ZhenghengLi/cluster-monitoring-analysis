@@ -40,12 +40,13 @@ actual_period_m = end_time_s / 60 - begin_time_s / 60
 begin_time = datetime.fromtimestamp(begin_time_s)
 end_time = datetime.fromtimestamp(end_time_s)
 
-print('query time range: %s => %s' %
+print()
+print(' query time range: %s => %s' %
       (datetime.fromtimestamp(args.begin_time).strftime(timefmt),
        datetime.fromtimestamp(args.end_time).strftime(timefmt)))
-print('record period: %.2f days' % (record_period_m / 60.0 / 24.0))
-print('actual period: %.2f days (%s => %s)' %
-      (actual_period_m / 60.0 / 24.0, begin_time.strftime(timefmt), end_time.strftime(timefmt)))
+print('actual time range: %s => %s (%.2f days)' %
+      (begin_time.strftime(timefmt), end_time.strftime(timefmt), actual_period_m / 60.0 / 24.0))
+print('total record time: %.2f days' % (record_period_m / 60.0 / 24.0))
 
 cur.execute("""
 select idle.node as node,
@@ -95,9 +96,11 @@ name_list = []
 for desc in cur.description:
     name_list.append(desc[0])
 
-print(tuple(name_list))
+print()
+print('%7s %12s %12s %12s %12s %12s %12s %12s' % tuple(name_list))
 for record in cur:
-    print(record)
+    print('%7s %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f' % record)
+print()
 
 cur.close()
 conn.close()
