@@ -30,7 +30,7 @@ conn = psycopg2.connect(host='vm.physky.org', port=8862, dbname='cluster_monitor
 cur = conn.cursor()
 
 cur.execute("""
-select count(*), min(time) / 1000, max(time) / 1000
+select count(*) as count, min(time) / 1000 as min_time, max(time) / 1000 as max_time
 from node_cpu_load
 where time > %s and time < %s and node=%s
 """, (args.begin_time * 1000, args.end_time * 1000, 'gpu01'))
@@ -46,3 +46,58 @@ print('query time range: %s => %s' %
 print('record period: %.2f days' % (record_period_m / 60.0 / 24.0))
 print('actual period: %.2f days (%s => %s)' %
       (actual_period_m / 60.0 / 24.0, begin_time.strftime(timefmt), end_time.strftime(timefmt)))
+
+cur.execute("""
+select idle.node as node,
+    round(
+        (total.max_time - total.min_time) / 60000.0 / 60./ 24,
+        2
+    ) as total_time,
+    round(total.cnt / 60.0 / 24, 2) as record_time,
+    round(idle.cnt / 60.0 / 24, 2) as fully_idle,
+    round((total.cnt - idle.cnt) / 60.0 / 24, 2) as usage_time,
+    round(cast(usage.val / 60.0 / 24 as NUMERIC), 2) as cpu_time,
+    round(cast(busy.cnt / 60.0 / 24 as NUMERIC), 2) as fully_busy,
+    round(cast(busy.cnt / usage.val as NUMERIC), 2) as busy_ratio
+from (
+        select node,
+            count(*) as cnt
+        from node_cpu_load
+        where idle > 99.5 and time > %(begin)s and time < %(end)s
+        GROUP by node
+    ) as idle
+    INNER JOIN (
+        select node,
+            sum(1 - idle / 100.) as cnt
+        from node_cpu_load
+        where idle < 0.5 and time > %(begin)s and time < %(end)s
+        group by node
+    ) as busy on idle.node = busy.node
+    INNER JOIN (
+        select node,
+            sum(1 - idle / 100.) as val
+        from node_cpu_load
+        where idle <= 99.5 and time > %(begin)s and time < %(end)s
+        group by node
+    ) as usage on idle.node = usage.node
+    INNER JOIN (
+        select node,
+            count(*) as cnt,
+            min(time) as min_time,
+            max(time) as max_time
+        from node_cpu_load
+        where time > %(begin)s and time < %(end)s
+        group by node
+    ) as total on idle.node = total.node
+""", {'begin': args.begin_time * 1000, 'end': args.end_time * 1000})
+
+name_list = []
+for desc in cur.description:
+    name_list.append(desc[0])
+
+print(tuple(name_list))
+for record in cur:
+    print(record)
+
+cur.close()
+conn.close()
