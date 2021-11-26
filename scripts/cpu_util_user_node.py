@@ -44,8 +44,8 @@ print()
 print('  query time range: %s => %s' %
       (datetime.fromtimestamp(args.begin_time).strftime(timefmt),
        datetime.fromtimestamp(args.end_time).strftime(timefmt)))
-print(' actual time range: %s => %s' %
-      (begin_time.strftime(timefmt), end_time.strftime(timefmt)))
+print(' actual time range: %s => %s (%.2f days)' %
+      (begin_time.strftime(timefmt), end_time.strftime(timefmt), actual_period_m / 60.0 / 24.0))
 
 cur.execute("""
 select per_node.user as user,

@@ -44,22 +44,23 @@ print()
 print('  query time range: %s => %s' %
       (datetime.fromtimestamp(args.begin_time).strftime(timefmt),
        datetime.fromtimestamp(args.end_time).strftime(timefmt)))
-print(' actual time range: %s => %s' %
-      (begin_time.strftime(timefmt), end_time.strftime(timefmt)))
+print(' actual time range: %s => %s (%.2f days)' %
+      (begin_time.strftime(timefmt), end_time.strftime(timefmt), actual_period_m / 60.0 / 24.0))
 
 cur.execute("""
 select "user",
-    round(cast(count(*) / 60.0 / 24.0 / 8.0 as NUMERIC), 2) as using_time,
+    round(cast(count(*) / 60.0 / 24.0 / 8.0 as NUMERIC), 2) as using_time_avg,
     round(
         cast(sum(cpu) / 100.0 / 60.0 / 24.0 / 8.0 as NUMERIC),
         2
-    ) as cpu_time
+    ) as cpu_time_avg,
+    round(cast(sum(cpu) / 100.0 / count(*) as NUMERIC), 2) as ratio_avg
 from user_cpu_mem
 where time > %(begin)s and time < %(end)s
 group by "user"
 having count(*) / 60.0 / 24.0 / 8.0 >= 0.01
-order by cpu_time desc,
-    using_time desc
+order by cpu_time_avg desc,
+    using_time_avg desc
 """, {'begin': args.begin_time * 1000, 'end': args.end_time * 1000})
 
 name_list = []
@@ -67,10 +68,10 @@ for desc in cur.description:
     name_list.append(desc[0])
 
 print()
-print('%10s %12s %12s' % tuple(name_list))
+print('%10s %16s %15s %15s' % tuple(name_list))
 
 for record in cur:
-    print('%10s %12.2f %12.2f' % record)
+    print('%10s %16.2f %15.2f %15.2f' % record)
 print()
 
 cur.close()
