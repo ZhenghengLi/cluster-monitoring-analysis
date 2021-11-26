@@ -2,7 +2,7 @@
 
 import argparse
 import time
-import psycopg2 as pg2
+import psycopg2
 
 parser = argparse.ArgumentParser(description='cpu usage statistics')
 
@@ -24,21 +24,17 @@ args = parser.parse_args()
 
 print('current time:', args.end_time)
 
-conn = pg2.connect(host='vm.physky.org', port=8862, dbname='cluster_monitoring',
-                   user='cluster_monitoring_analysis', password='cluster_monitoring_password')
+conn = psycopg2.connect(host='vm.physky.org', port=8862, dbname='cluster_monitoring',
+                        user='cluster_monitoring_analysis', password='cluster_monitoring_password')
 
 cur = conn.cursor()
 
 cur.execute("""
-select *
+select node, count(*)
 from node_cpu_load
-where node = 'gpu04'
-limit 10
+group by node
 """)
-while True:
-    res = cur.fetchone()
-    if res:
-        print(res)
-    else:
-        print(res)
-        break
+
+res = cur.fetchall()
+
+print(res)
