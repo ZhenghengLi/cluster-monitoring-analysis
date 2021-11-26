@@ -23,13 +23,10 @@ parser.add_argument("-b", dest="end_time",
                     help="end time in unix time seconds", default=int(time.time()), type=int)
 args = parser.parse_args()
 
-conn = psycopg2.connect(host='vm.physky.org', port=8862, dbname='cluster_monitoring',
-                        user='cluster_monitoring_analysis', password='cluster_monitoring_password')
-
-args.begin_time
-args.end_time
 timefmt = '%Y-%m-%dT%H:%M:%S'
 
+conn = psycopg2.connect(host='vm.physky.org', port=8862, dbname='cluster_monitoring',
+                        user='cluster_monitoring_analysis', password='cluster_monitoring_password')
 cur = conn.cursor()
 
 cur.execute("""
@@ -44,7 +41,8 @@ begin_time = datetime.fromtimestamp(begin_time_s)
 end_time = datetime.fromtimestamp(end_time_s)
 
 print('query time range: %s => %s' %
-      (datetime.fromtimestamp(args.begin_time).strftime(timefmt), datetime.fromtimestamp(args.end_time).strftime(timefmt)))
+      (datetime.fromtimestamp(args.begin_time).strftime(timefmt),
+       datetime.fromtimestamp(args.end_time).strftime(timefmt)))
 print('record period: %.2f days' % (record_period_m / 60.0 / 24.0))
 print('actual period: %.2f days (%s => %s)' %
       (actual_period_m / 60.0 / 24.0, begin_time.strftime(timefmt), end_time.strftime(timefmt)))
