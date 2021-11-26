@@ -1,11 +1,14 @@
 select idle.node as node,
-    (total.max_time - total.min_time) / 60000.0 / 60./ 24 as total_time,
-    total.cnt / 60.0 / 24 as record_time,
-    idle.cnt / 60.0 / 24 as fully_idle,
-    (total.cnt - idle.cnt) / 60.0 / 24 as usage_time,
-    usage.val / 60.0 / 24 as cpu_time,
-    busy.cnt / 60.0 / 24 as fully_busy,
-    busy.cnt / usage.val as busy_ratio
+    round(
+        (total.max_time - total.min_time) / 60000.0 / 60./ 24,
+        2
+    ) as total_time,
+    round(total.cnt / 60.0 / 24, 2) as record_time,
+    round(idle.cnt / 60.0 / 24, 2) as fully_idle,
+    round((total.cnt - idle.cnt) / 60.0 / 24, 2) as usage_time,
+    round(cast(usage.val / 60.0 / 24 as NUMERIC), 2) as cpu_time,
+    round(cast(busy.cnt / 60.0 / 24 as NUMERIC), 2) as fully_busy,
+    round(cast(busy.cnt / usage.val as NUMERIC), 2) as busy_ratio
 from (
         select node,
             count(*) as cnt
