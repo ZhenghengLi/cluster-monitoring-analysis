@@ -17,23 +17,25 @@ parser.add_argument("-u", dest="dbuser",
 parser.add_argument("-w", dest="dbpassword",
                     help="database password", default='cluster_monitoring_password', type=str)
 parser.add_argument("-a", dest="begin_time",
-                    help="begin time", default=0, type=int)
+                    help="begin time in unix time seconds", default=0, type=int)
 parser.add_argument("-b", dest="end_time",
-                    help="end time", default=(1000 * int(time.time())), type=int)
+                    help="end time in unix time seconds", default=int(time.time()), type=int)
 args = parser.parse_args()
-
-print('current time:', args.end_time)
 
 conn = psycopg2.connect(host='vm.physky.org', port=8862, dbname='cluster_monitoring',
                         user='cluster_monitoring_analysis', password='cluster_monitoring_password')
+
+args.begin_time *= 1000
+args.end_time *= 1000
 
 cur = conn.cursor()
 
 cur.execute("""
 select node, count(*)
 from node_cpu_load
+where time > %s and time < %s
 group by node
-""")
+""", (args.begin_time, args.end_time))
 
 res = cur.fetchall()
 
