@@ -48,47 +48,18 @@ print(' actual time range: %s => %s' %
       (begin_time.strftime(timefmt), end_time.strftime(timefmt)))
 
 cur.execute("""
-select per_node.user as user,
-    per_node.node as node,
-    round(cast(per_node.using_time as NUMERIC), 2) as using_time,
-    round(cast(per_node.cpu_time as NUMERIC), 2) as cpu_time,
+select "user",
+    round(cast(count(*) / 60.0 / 24.0 / 8.0 as NUMERIC), 2) as using_time,
     round(
-        cast(
-            per_node.cpu_time / per_node.using_time as NUMERIC
-        ),
+        cast(sum(cpu) / 100.0 / 60.0 / 24.0 / 8.0 as NUMERIC),
         2
-    ) as ratio,
-    round(cast(average.using_time as NUMERIC), 2) as using_time_avg,
-    round(cast(average.cpu_time as NUMERIC), 2) as cpu_time_avg,
-    round(
-        cast(
-            average.cpu_time / average.using_time as NUMERIC
-        ),
-        2
-    ) as ratio_avg
-FROM (
-        select "user",
-            count(*) / 60.0 / 24.0 / 8.0 as using_time,
-            sum(cpu) / 100.0 / 60.0 / 24.0 / 8.0 as cpu_time
-        from user_cpu_mem
-        where time > %(begin)s and time < %(end)s
-        group by "user"
-    ) as average
-    INNER JOIN (
-        select "user",
-            node,
-            count(*) / 60.0 / 24.0 as using_time,
-            sum(cpu) / 100.0 / 60.0 / 24.0 as cpu_time
-        from user_cpu_mem
-        where time > %(begin)s and time < %(end)s
-        group by "user",
-            node
-    ) as per_node on average.user = per_node.user
-where per_node.using_time >= 0.01
-order by cpu_time_avg desc,
-    using_time_avg desc,
-    "user",
-    node
+    ) as cpu_time
+from user_cpu_mem
+where time > %(begin)s and time < %(end)s
+group by "user"
+having count(*) / 60.0 / 24.0 / 8.0 >= 0.01
+order by cpu_time desc,
+    using_time desc
 """, {'begin': args.begin_time * 1000, 'end': args.end_time * 1000})
 
 name_list = []
@@ -96,10 +67,10 @@ for desc in cur.description:
     name_list.append(desc[0])
 
 print()
-print('%10s %9s %13s %11s %10s %16s %14s %11s' % tuple(name_list))
+print('%10s %12s %12s' % tuple(name_list))
 
 for record in cur:
-    print('%10s %9s %13.2f %11.2f %10.2f %16.2f %14.2f %11.2f' % record)
+    print('%10s %12.2f %12.2f' % record)
 print()
 
 cur.close()
