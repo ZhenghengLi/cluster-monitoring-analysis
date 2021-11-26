@@ -30,23 +30,22 @@ conn = psycopg2.connect(host='vm.physky.org', port=8862, dbname='cluster_monitor
 cur = conn.cursor()
 
 cur.execute("""
-select count(*) as count, min(time) / 1000 as min_time, max(time) / 1000 as max_time
+select min(time) / 1000 as min_time, max(time) / 1000 as max_time
 from node_cpu_load
-where time > %s and time < %s and node=%s
-""", (args.begin_time * 1000, args.end_time * 1000, 'gpu01'))
+where time > %s and time < %s
+""", (args.begin_time * 1000, args.end_time * 1000))
 
-record_period_m, begin_time_s, end_time_s = cur.fetchone()
+begin_time_s, end_time_s = cur.fetchone()
 actual_period_m = end_time_s / 60 - begin_time_s / 60
 begin_time = datetime.fromtimestamp(begin_time_s)
 end_time = datetime.fromtimestamp(end_time_s)
 
 print()
-print(' query time range: %s => %s' %
+print('  query time range: %s => %s' %
       (datetime.fromtimestamp(args.begin_time).strftime(timefmt),
        datetime.fromtimestamp(args.end_time).strftime(timefmt)))
-print('actual time range: %s => %s (%.2f days)' %
-      (begin_time.strftime(timefmt), end_time.strftime(timefmt), actual_period_m / 60.0 / 24.0))
-print('total record time: %.2f days' % (record_period_m / 60.0 / 24.0))
+print(' actual time range: %s => %s' %
+      (begin_time.strftime(timefmt), end_time.strftime(timefmt)))
 
 cur.execute("""
 select idle.node as node,
@@ -56,7 +55,7 @@ select idle.node as node,
     ) as total_time,
     round(total.cnt / 60.0 / 24, 2) as record_time,
     round(idle.cnt / 60.0 / 24, 2) as fully_idle,
-    round((total.cnt - idle.cnt) / 60.0 / 24, 2) as usage_time,
+    round((total.cnt - idle.cnt) / 60.0 / 24, 2) as using_time,
     round(cast(usage.val / 60.0 / 24 as NUMERIC), 2) as cpu_time,
     round(cast(busy.cnt / 60.0 / 24 as NUMERIC), 2) as fully_busy,
     round(cast(busy.cnt / usage.val as NUMERIC), 2) as busy_ratio
