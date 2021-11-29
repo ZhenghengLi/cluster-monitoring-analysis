@@ -48,19 +48,32 @@ print(' actual time range: %s => %s (%.2f days)' %
       (begin_time.strftime(timefmt), end_time.strftime(timefmt), actual_period_m / 60.0 / 24.0))
 
 cur.execute("""
-select "user",
-    round(cast(count(*) / 60.0 / 24.0 / 8.0 as NUMERIC), 2) as using_time_avg,
+select total.node_busid as node_busid,
     round(
-        cast(sum(cpu) / 100.0 / 60.0 / 24.0 / 8.0 as NUMERIC),
+        (total.max_time - total.min_time) / 60000.0 / 60./ 24,
         2
-    ) as cpu_time_avg,
-    round(cast(sum(cpu) / 100.0 / count(*) as NUMERIC), 2) as ratio_avg
-from user_cpu_mem
-where time > %(begin)s and time < %(end)s
-group by "user"
-having count(*) / 60.0 / 24.0 / 8.0 >= 0.0002
-order by cpu_time_avg desc,
-    using_time_avg desc
+    ) as total_time,
+    round(total.cnt / 60.0 / 24, 2) as record_time,
+    round(cast(usage.gpu_time / 60.0 / 24 as NUMERIC), 2) as gpu_time
+from (
+        select concat(node, '-', busid) as node_busid,
+            count(*) as cnt,
+            min(time) as min_time,
+            max(time) as max_time
+        from node_gpu_load
+        where time > %(begin)s and time < %(end)s
+        group by node,
+            busid
+    ) as total
+    INNER JOIN (
+        select concat(node, '-', busid) as node_busid,
+            busid,
+            sum(gpu / 100.0) as gpu_time
+        from node_gpu_load
+        where time > %(begin)s and time < %(end)s
+        group by node,
+            busid
+    ) as usage on total.node_busid = usage.node_busid
 """, {'begin': args.begin_time * 1000, 'end': args.end_time * 1000})
 
 name_list = []
@@ -68,11 +81,10 @@ for desc in cur.description:
     name_list.append(desc[0])
 
 print()
-print('%10s %16s %15s %15s' % tuple(name_list))
-print('%10s %16s %15s %15s' % ('', '(days)', '(days)', ''))
-
+print('%25s %12s %12s %12s' % tuple(name_list))
+print('%25s %12s %12s %12s' % ('', '(days)', '(days)', '(days)'))
 for record in cur:
-    print('%10s %16.2f %15.2f %15.2f' % record)
+    print('%25s %12.2f %12.2f %12.2f' % record)
 print()
 
 cur.close()

@@ -97,6 +97,8 @@ for desc in cur.description:
 
 print()
 print('%7s %12s %12s %12s %12s %12s %12s %12s' % tuple(name_list))
+print('%7s %12s %12s %12s %12s %12s %12s %12s' %
+      ('', '(days)', '(days)', '(days)', '(days)', '(days)', '(days)', ''))
 for record in cur:
     print('%7s %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f' % record)
 print()
