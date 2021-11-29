@@ -69,7 +69,7 @@ for desc in cur.description:
 
 print()
 print('%10s %16s %15s %15s' % tuple(name_list))
-print('%10s %16s %15s %15s' % ('', '(days)', '(days)', ''))
+print('%10s %16s %15s %15s' % ('', '(days/node)', '(days/node)', ''))
 
 for record in cur:
     print('%10s %16.2f %15.2f %15.2f' % record)

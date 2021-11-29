@@ -54,7 +54,9 @@ select total.node_busid as node_busid,
         2
     ) as total_time,
     round(total.cnt / 60.0 / 24, 2) as record_time,
-    round(cast(usage.gpu_time / 60.0 / 24 as NUMERIC), 2) as gpu_time
+    round(cast(record.cnt / 60.0 / 24 as NUMERIC), 2) as using_time,
+    round(cast(usage.gpu_time / 60.0 / 24 as NUMERIC), 2) as gpu_time,
+    round(cast(usage.gpu_time / record.cnt as NUMERIC), 2) as ratio
 from (
         select concat(node, '-', busid) as node_busid,
             count(*) as cnt,
@@ -74,6 +76,14 @@ from (
         group by node,
             busid
     ) as usage on total.node_busid = usage.node_busid
+    INNER JOIN (
+        select concat(node, '-', busid) as node_busid,
+            count(*) as cnt
+        from node_gpu_load
+        where gpu > 0 and time > %(begin)s and time < %(end)s
+        group by node,
+            busid
+    ) as record on total.node_busid = record.node_busid
 """, {'begin': args.begin_time * 1000, 'end': args.end_time * 1000})
 
 name_list = []
@@ -81,10 +91,11 @@ for desc in cur.description:
     name_list.append(desc[0])
 
 print()
-print('%25s %12s %12s %12s' % tuple(name_list))
-print('%25s %12s %12s %12s' % ('', '(days)', '(days)', '(days)'))
+print('%25s %12s %12s %12s %12s %12s' % tuple(name_list))
+print('%25s %12s %12s %12s %12s %12s' %
+      ('', '(days)', '(days)', '(days)', '(days)', ''))
 for record in cur:
-    print('%25s %12.2f %12.2f %12.2f' % record)
+    print('%25s %12.2f %12.2f %12.2f %12.2f %12.2f' % record)
 print()
 
 cur.close()
