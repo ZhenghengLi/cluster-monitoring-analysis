@@ -49,28 +49,28 @@ print(' actual time range: %s => %s (%.2f days)' %
 
 cur.execute("""
 select usage.user as "user",
-    round(usage.using_time_avg, 2) as using_time_avg,
-    round(cast(usage.cpu_time_avg as NUMERIC), 2) as cpu_time_avg,
+    round(usage.using_time_all, 2) as using_time_all,
+    round(cast(usage.cpu_time_all as NUMERIC), 2) as cpu_time_all,
     round(
-        cast(coalesce(busy.busy_time_avg, 0) as NUMERIC),
+        cast(coalesce(busy.busy_time_all, 0) as NUMERIC),
         2
-    ) as fully_busy_avg,
+    ) as fully_busy_all,
     round(
         cast(
-            usage.cpu_time_avg / usage.using_time_avg as NUMERIC
+            usage.cpu_time_all / usage.using_time_all as NUMERIC
         ),
         2
     ) as cpu_ratio,
     round(
         cast(
-            coalesce(busy.busy_time_avg / usage.cpu_time_avg, 0) as NUMERIC
+            coalesce(busy.busy_time_all / usage.cpu_time_all, 0) as NUMERIC
         ),
         2
     ) as busy_ratio
 FROM (
         select "user",
-            count(*) / 60.0 / 24.0 / 8.0 as using_time_avg,
-            sum(cpu) / 100.0 / 60.0 / 24.0 / 8.0 as cpu_time_avg
+            count(*) / 60.0 / 24.0 as using_time_all,
+            sum(cpu) / 100.0 / 60.0 / 24.0 as cpu_time_all
         from user_cpu_mem
         where time > %(begin)s and time < %(end)s
         group by "user"
@@ -78,13 +78,13 @@ FROM (
     ) as usage
     LEFT OUTER JOIN (
         select "user",
-            sum(cpu) / 100.0 / 60.0 / 24.0 / 8.0 as busy_time_avg
+            sum(cpu) / 100.0 / 60.0 / 24.0 as busy_time_all
         from user_cpu_mem
         where cpu > 95 and time > %(begin)s and time < %(end)s
         group by "user"
     ) as busy on usage.user = busy.user
-order by cpu_time_avg desc,
-    using_time_avg desc
+order by cpu_time_all desc,
+    using_time_all desc
 """, {'begin': args.begin_time * 1000, 'end': args.end_time * 1000})
 
 name_list = []
