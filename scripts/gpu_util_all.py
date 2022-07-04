@@ -67,7 +67,7 @@ from (
         group by node,
             busid
     ) as total
-    INNER JOIN (
+    LEFT OUTER JOIN (
         select concat(node, '-', busid) as node_busid,
             busid,
             sum(gpu / 100.0) as gpu_time
@@ -76,7 +76,7 @@ from (
         group by node,
             busid
     ) as usage on total.node_busid = usage.node_busid
-    INNER JOIN (
+    LEFT OUTER JOIN (
         select concat(node, '-', busid) as node_busid,
             count(*) as cnt
         from node_gpu_load

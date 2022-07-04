@@ -7,8 +7,14 @@ select idle.node as node,
     round(idle.cnt / 60.0 / 24, 2) as fully_idle,
     round((total.cnt - idle.cnt) / 60.0 / 24, 2) as usage_time,
     round(cast(usage.val / 60.0 / 24 as NUMERIC), 2) as cpu_time,
-    round(cast(busy.cnt / 60.0 / 24 as NUMERIC), 2) as fully_busy,
-    round(cast(busy.cnt / usage.val as NUMERIC), 2) as busy_ratio
+    round(
+        cast(COALESCE(busy.cnt, 0) / 60.0 / 24 as NUMERIC),
+        2
+    ) as fully_busy,
+    round(
+        cast(COALESCE(busy.cnt, 0) / usage.val as NUMERIC),
+        2
+    ) as busy_ratio
 from (
         select node,
             count(*) as cnt,
