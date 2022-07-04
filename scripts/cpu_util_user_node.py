@@ -58,22 +58,22 @@ select per_node.user as user,
         ),
         2
     ) as ratio,
-    round(cast(average.using_time as NUMERIC), 2) as using_time_avg,
-    round(cast(average.cpu_time as NUMERIC), 2) as cpu_time_avg,
+    round(cast(all_node.using_time as NUMERIC), 2) as using_time_all,
+    round(cast(all_node.cpu_time as NUMERIC), 2) as cpu_time_all,
     round(
         cast(
-            average.cpu_time / average.using_time as NUMERIC
+            all_node.cpu_time / all_node.using_time as NUMERIC
         ),
         2
-    ) as ratio_avg
+    ) as ratio_all
 FROM (
         select "user",
-            count(*) / 60.0 / 24.0 / 8.0 as using_time,
-            sum(cpu) / 100.0 / 60.0 / 24.0 / 8.0 as cpu_time
+            count(*) / 60.0 / 24.0 as using_time,
+            sum(cpu) / 100.0 / 60.0 / 24.0 as cpu_time
         from user_cpu_mem
         where time > %(begin)s and time < %(end)s
         group by "user"
-    ) as average
+    ) as all_node
     INNER JOIN (
         select "user",
             node,
@@ -83,10 +83,10 @@ FROM (
         where time > %(begin)s and time < %(end)s
         group by "user",
             node
-    ) as per_node on average.user = per_node.user
+    ) as per_node on all_node.user = per_node.user
 where per_node.using_time >= 0.001
-order by cpu_time_avg desc,
-    using_time_avg desc,
+order by cpu_time_all desc,
+    using_time_all desc,
     "user",
     node
 """, {'begin': args.begin_time * 1000, 'end': args.end_time * 1000})
@@ -98,7 +98,7 @@ for desc in cur.description:
 print()
 print('%10s %9s %13s %11s %10s %16s %14s %11s' % tuple(name_list))
 print('%10s %9s %13s %11s %10s %16s %14s %11s' %
-      ('', '', '(days)', '(days)', '', '(days/node)', '(days/node)', ''))
+      ('', '', '(days)', '(days)', '', '(days)', '(days)', ''))
 
 for record in cur:
     print('%10s %9s %13.2f %11.2f %10.2f %16.2f %14.2f %11.2f' % record)
