@@ -25,8 +25,8 @@ args = parser.parse_args()
 
 timefmt = '%Y-%m-%dT%H:%M:%S'
 
-conn = psycopg2.connect(host='vm.physky.org', port=8862, dbname='cluster_monitoring',
-                        user='cluster_monitoring_analysis', password='cluster_monitoring_password')
+conn = psycopg2.connect(host=args.dbhost, port=args.dbport, dbname=args.dbname,
+                        user=args.dbuser, password=args.dbpassword)
 cur = conn.cursor()
 
 cur.execute("""
