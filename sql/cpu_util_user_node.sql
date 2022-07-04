@@ -8,21 +8,21 @@ select per_node.user as user,
         ),
         2
     ) as ratio,
-    round(cast(average.using_time as NUMERIC), 2) as using_time_avg,
-    round(cast(average.cpu_time as NUMERIC), 2) as cpu_time_avg,
+    round(cast(all_node.using_time as NUMERIC), 2) as using_time_all,
+    round(cast(all_node.cpu_time as NUMERIC), 2) as cpu_time_all,
     round(
         cast(
-            average.cpu_time / average.using_time as NUMERIC
+            all_node.cpu_time / all_node.using_time as NUMERIC
         ),
         2
-    ) as ratio_avg
+    ) as ratio_all
 FROM (
         select "user",
-            count(*) / 60.0 / 24.0 / 8.0 as using_time,
-            sum(cpu) / 100.0 / 60.0 / 24.0 / 8.0 as cpu_time
+            count(*) / 60.0 / 24.0 as using_time,
+            sum(cpu) / 100.0 / 60.0 / 24.0 as cpu_time
         from user_cpu_mem
         group by "user"
-    ) as average
+    ) as all_node
     INNER JOIN (
         select "user",
             node,
@@ -31,9 +31,9 @@ FROM (
         from user_cpu_mem
         group by "user",
             node
-    ) as per_node on average.user = per_node.user
+    ) as per_node on all_node.user = per_node.user
 where per_node.using_time >= 0.01
-order by cpu_time_avg desc,
-    using_time_avg desc,
+order by cpu_time_all desc,
+    using_time_all desc,
     "user",
     node
