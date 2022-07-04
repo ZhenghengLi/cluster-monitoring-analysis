@@ -3,8 +3,30 @@
 import argparse
 import time
 import os
+from smtplib import SMTP_SSL
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from datetime import datetime
 import subprocess
+from typing import Sequence
+
+
+def send_mail(user_163: str, passwd_163: str, to_addrs: Sequence[str], subject: str, message: str):
+    smtp_host = 'smtp.163.com'
+    smtp_port = 465
+    smtp_user = user_163
+    smtp_pass = passwd_163
+    from_addr = user_163
+    msg = MIMEMultipart()
+    msg['From'] = from_addr
+    msg['To'] = ', '.join(to_addrs)
+    msg['Subject'] = subject
+    msg.attach(MIMEText('<body><pre>' + message + '</pre></body>', 'html'))
+    server_ssl = SMTP_SSL(smtp_host, smtp_port)
+    server_ssl.login(smtp_user, smtp_pass)
+    server_ssl.sendmail(from_addr, to_addrs, msg.as_string())
+    server_ssl.quit()
+
 
 parser = argparse.ArgumentParser(description='computing resource usage')
 
@@ -22,6 +44,10 @@ parser.add_argument("-a", dest="begin_time",
                     help="begin time in unix time seconds", default=(int(time.time() - 604800)), type=int)
 parser.add_argument("-b", dest="end_time",
                     help="end time in unix time seconds", default=int(time.time()), type=int)
+parser.add_argument("--user163", dest="user163",
+                    help="email user of 163", type=str)
+parser.add_argument("--pass163", dest="pass163",
+                    help="email password of 163", type=str)
 args = parser.parse_args()
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -61,11 +87,16 @@ cpu_util_user_node_output = subprocess.check_output(
      '-b', str(args.end_time)]).decode('utf-8')
 
 message_str = ""
-message_str += "\n==== CPU utilization of all nodes ===================================================================\n"
+message_str += "\n==== CPU utilization of all nodes =============================================\n"
 message_str += cpu_util_all_output
-message_str += "\n==== GPU utilization of all nodes ===================================================================\n"
+message_str += "\n==== GPU utilization of all nodes =============================================\n"
 message_str += gpu_util_all_output
-message_str += "\n==== CPU utilization of all users on all nodes ======================================================\n"
+message_str += "\n==== CPU utilization of all users on all nodes =========+======================\n"
 message_str += cpu_util_user_node_output
 
 print(message_str)
+
+if args.user163 and args.pass163:
+    mail_list = [line.rstrip('\n') for line in open(mail_addr_file, 'r')]
+    send_mail(args.user163, args.pass163, mail_list,
+              "Cluster Computing Resource Utilization Weekly Report", message_str)
