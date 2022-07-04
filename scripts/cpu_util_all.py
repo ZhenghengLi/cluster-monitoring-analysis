@@ -48,7 +48,7 @@ print(' actual time range: %s => %s (%.2f days)' %
       (begin_time.strftime(timefmt), end_time.strftime(timefmt), actual_period_m / 60.0 / 24.0))
 
 cur.execute("""
-select idle.node as node,
+select total.node as node,
     round(
         (total.max_time - total.min_time) / 60000.0 / 60./ 24,
         2
@@ -72,14 +72,14 @@ from (
         select node,
             count(*) as cnt
         from node_cpu_load
-        where idle > 99.5 and time > %(begin)s and time < %(end)s
+        where idle > 99 and time > %(begin)s and time < %(end)s
         GROUP by node
     ) as idle on total.node = idle.node
     LEFT OUTER JOIN (
         select node,
             sum(1 - idle / 100.) as cnt
         from node_cpu_load
-        where idle < 0.5 and time > %(begin)s and time < %(end)s
+        where idle < 1 and time > %(begin)s and time < %(end)s
         group by node
     ) as busy on total.node = busy.node
     LEFT OUTER JOIN (
