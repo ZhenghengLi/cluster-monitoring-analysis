@@ -21,7 +21,8 @@ def send_mail(user_163: str, passwd_163: str, to_addrs: Sequence[str], subject: 
     msg['From'] = from_addr
     msg['To'] = ', '.join(to_addrs)
     msg['Subject'] = subject
-    msg.attach(MIMEText('<body><pre>' + message + '</pre></body>', 'html'))
+    msg.attach(MIMEText('<pre style="font-family: monospace">' +
+                        message + '</pre>', 'html'))
     server_ssl = SMTP_SSL(smtp_host, smtp_port)
     server_ssl.login(smtp_user, smtp_pass)
     server_ssl.sendmail(from_addr, to_addrs, msg.as_string())
@@ -87,11 +88,11 @@ cpu_util_user_node_output = subprocess.check_output(
      '-b', str(args.end_time)]).decode('utf-8')
 
 message_str = ""
-message_str += "\n==== CPU utilization of all nodes =============================================\n"
+message_str += "\n==== CPU utilization of all nodes =================================================================\n"
 message_str += cpu_util_all_output
-message_str += "\n==== GPU utilization of all nodes =============================================\n"
+message_str += "\n==== GPU utilization of all nodes =================================================================\n"
 message_str += gpu_util_all_output
-message_str += "\n==== CPU utilization of all users on all nodes =========+======================\n"
+message_str += "\n==== CPU utilization of all users on all nodes ====================================================\n"
 message_str += cpu_util_user_node_output
 
 print(message_str)
