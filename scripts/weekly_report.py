@@ -99,9 +99,11 @@ message_str += cpu_util_user_node_output
 print(message_str)
 
 mail_header = """
+----
 This email is automatically sent by a script written by Zhengheng Li (lizhh1@shanghaitech.edu.cn), 
 which contains the computing resources utilization statistics of the demo machine (including 9 nodes) 
 during the last one week. For realtime monitor, please visit <a src="https://cluster.physky.org/monitor">https://cluster.physky.org/monitor</a>
+----
 """
 
 if args.user163 and args.pass163:
