@@ -21,6 +21,7 @@ def send_mail(user_163: str, passwd_163: str, to_addrs: Sequence[str], subject: 
     msg['From'] = from_addr
     msg['To'] = ', '.join(to_addrs)
     msg['Subject'] = subject
+    msg['Reply-to'] = 'lizhh1@shanghaitech.edu.cn'
     msg.attach(MIMEText('<pre style="font-family: monospace">' +
                         message + '</pre>', 'html'))
     server_ssl = SMTP_SSL(smtp_host, smtp_port)
@@ -97,7 +98,14 @@ message_str += cpu_util_user_node_output
 
 print(message_str)
 
+mail_header = """
+This email is automatically sent by a script written by Zhengheng Li (lizhh1@shanghaitech.edu.cn), 
+which contains the computing resources utilization statistics of the demo machine (including 9 nodes) 
+during the last one week. For realtime monitor, please visit <a src="https://cluster.physky.org/monitor">https://cluster.physky.org/monitor</a>
+"""
+
 if args.user163 and args.pass163:
     mail_list = [line.rstrip('\n') for line in open(mail_addr_file, 'r')]
+    mail_message = mail_header + message_str
     send_mail(args.user163, args.pass163, mail_list,
-              "Cluster Computing Resource Utilization Weekly Report", message_str)
+              "Cluster Computing Resources Utilization Weekly Report", mail_message)
