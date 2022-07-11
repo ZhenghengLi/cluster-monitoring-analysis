@@ -54,7 +54,7 @@ select total.node_busid as node_busid,
         2
     ) as total_time,
     round(total.cnt / 60.0 / 24, 2) as record_time,
-    round(cast(record.cnt / 60.0 / 24 as NUMERIC), 2) as using_time,
+    round(cast(COALESCE(record.cnt, 0) / 60.0 / 24 as NUMERIC), 2) as using_time,
     round(cast(COALESCE(usage.gpu_time, 0) / 60.0 / 24 as NUMERIC), 2) as gpu_time,
     round(cast(COALESCE(usage.gpu_time / record.cnt, 0) as NUMERIC), 2) as ratio
 from (
